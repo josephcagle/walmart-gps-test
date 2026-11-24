@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GPS Tester">
+  <title>GPS Precision Tester</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --bg2: #121b2e;
+      --card: #18233a;
+      --ink: #eef3ff;
+      --muted: #9aa8c2;
+      --line: #2a3a58;
+      --green: #22c55e;
+      --green-bg: rgba(34, 197, 94, 0.16);
+      --yellow: #eab308;
+      --yellow-bg: rgba(234, 179, 8, 0.16);
+      --red: #ef4444;
+      --red-bg: rgba(239, 68, 68, 0.16);
+      --blue: #60a5fa;
+      --orange: #fb923c;
+      --btn: #2b3d5e;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bot: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    }
+    body {
+      padding: calc(12px + var(--safe-top)) 14px calc(20px + var(--safe-bot));
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.35rem;
+      letter-spacing: -0.02em;
+      margin: 0 0 8px;
+    }
+    .perm {
+      background: #1a2742;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      margin-bottom: 14px;
+      color: #d7e2f5;
+    }
+    .perm strong { color: #fff; }
+    .hero {
+      border-radius: 18px;
+      padding: 18px 16px 16px;
+      text-align: center;
+      border: 1px solid var(--line);
+      background: var(--card);
+      margin-bottom: 12px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .hero.ok { background: var(--green-bg); border-color: rgba(34, 197, 94, 0.45); }
+    .hero.warn { background: var(--yellow-bg); border-color: rgba(234, 179, 8, 0.5); }
+    .hero.bad { background: var(--red-bg); border-color: rgba(239, 68, 68, 0.5); }
+    .hero .label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .hero .value {
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(3.4rem, 18vw, 5.2rem);
+      font-weight: 750;
+      line-height: 1;
+      margin: 6px 0 2px;
+      letter-spacing: -0.04em;
+    }
+    .hero .unit { font-size: 1.15rem; font-weight: 600; opacity: 0.85; }
+    .hero .sub { color: var(--muted); font-size: 0.88rem; margin-top: 6px; }
+    .meta, .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .stats { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    @media (max-width: 420px) {
+      .stats { grid-template-columns: 1fr 1fr; }
+    }
+    .tile {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 10px 9px;
+    }
+    .tile .k {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .tile .v {
+      font-variant-numeric: tabular-nums;
+      font-size: 1.02rem;
+      font-weight: 650;
+      margin-top: 3px;
+      word-break: break-all;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 14px;
+      background: var(--btn);
+      color: var(--ink);
+      font: inherit;
+      font-weight: 700;
+      padding: 14px 12px;
+      min-height: 52px;
+      cursor: pointer;
+      flex: 1;
+    }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    button.primary { background: #2563eb; }
+    button.primary.on { background: #b91c1c; }
+    button.ghost { background: transparent; border: 1px solid var(--line); font-weight: 600; color: var(--muted); }
+    .wp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 12px; }
+    .wp {
+      min-height: 96px;
+      font-size: 1.35rem;
+      border-radius: 18px;
+      box-shadow: 0 6px 0 rgba(0,0,0,0.28);
+    }
+    .wp:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,0.28); }
+    .wp-a { background: #1d4ed8; }
+    .wp-b { background: #c2410c; }
+    section {
+      background: var(--bg2);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    section h2 {
+      margin: 0 0 8px;
+      font-size: 1.02rem;
+    }
+    p.hint, .hint {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.4;
+    }
+    .result {
+      font-variant-numeric: tabular-nums;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-top: 8px;
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+    .result .big {
+      font-size: 1.25rem;
+      font-weight: 750;
+      margin: 2px 0 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      font-variant-numeric: tabular-nums;
+    }
+    th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    td.a { color: #93c5fd; }
+    td.b { color: #fdba74; }
+    .log-wrap {
+      max-height: 240px;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #0d1526;
+    }
+    .log-wrap table { font-size: 0.78rem; }
+    .status {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin: 0 0 10px;
+      min-height: 1.2em;
+    }
+    .status.err { color: #fca5a5; }
+    .empty { color: var(--muted); font-size: 0.88rem; padding: 6px 0; }
+  </style>
+</head>
+<body>
+  <h1>GPS Precision Tester</h1>
+  <div class="perm">
+    <strong>Location permission is required.</strong>
+    When Safari asks, tap <strong>Allow</strong> (and keep <strong>Precise Location</strong> on).
+    This page never uploads your location — readings stay on this phone until you export or copy the log.
+    HTTPS is required for geolocation; leave this tab in the foreground while you walk the store, and keep Wi‑Fi on.
+  </div>
+
+  <div id="hero" class="hero">
+    <div class="label">Reported horizontal accuracy</div>
+    <div class="value" id="accValue">—<span class="unit"> ft</span></div>
+    <div class="sub" id="accSub">Start tracking to begin. Green ≤ 10 ft, yellow 10–30 ft, red &gt; 30 ft.</div>
+  </div>
+  <p class="status" id="status">Not tracking yet.</p>
+
+  <div class="row">
+    <button id="btnStart" class="primary" type="button">Start tracking</button>
+    <button id="btnJitter" type="button" disabled>Start stand-still test</button>
+  </div>
+
+  <div class="meta">
+    <div class="tile"><div class="k">Latitude</div><div class="v" id="lat">—</div></div>
+    <div class="tile"><div class="k">Longitude</div><div class="v" id="lon">—</div></div>
+    <div class="tile"><div class="k">Altitude accuracy</div><div class="v" id="altAcc">—</div></div>
+    <div class="tile"><div class="k">Updates</div><div class="v" id="updates">0</div></div>
+    <div class="tile"><div class="k">Time since last fix</div><div class="v" id="age">—</div></div>
+    <div class="tile"><div class="k">Last fix time</div><div class="v" id="lastTime">—</div></div>
+  </div>
+
+  <div class="stats">
+    <div class="tile"><div class="k">Best</div><div class="v" id="best">—</div></div>
+    <div class="tile"><div class="k">Median</div><div class="v" id="median">—</div></div>
+    <div class="tile"><div class="k">Worst</div><div class="v" id="worst">—</div></div>
+    <div class="tile"><div class="k">% ≤ 10 ft</div><div class="v" id="pct10">—</div></div>
+  </div>
+
+  <section>
+    <h2>Waypoint consistency</h2>
+    <p class="hint">Walk a short, repeatable path (for example, two aisle ends or two pillars). As you pass each one, tap the matching button. Do several A → B → A → B passes. The spread of all A taps, all B taps, and the A-to-B distances is your real-world precision — no tape measure needed. Reported accuracy can be optimistic, so trust this more than the big number above.</p>
+    <div class="wp-row">
+      <button id="btnA" class="wp wp-a" type="button" disabled>Waypoint A</button>
+      <button id="btnB" class="wp wp-b" type="button" disabled>Waypoint B</button>
+    </div>
+    <div class="row">
+      <button id="btnUndoWp" class="ghost" type="button">Undo last tap</button>
+      <button id="btnClearWp" class="ghost" type="button">Clear waypoints</button>
+    </div>
+    <div id="wpSummary" class="result" hidden></div>
+    <div id="wpTableWrap" class="log-wrap" style="margin-top:8px;max-height:180px" hidden>
+      <table>
+        <thead>
+          <tr><th>#</th><th>Point</th><th>Time</th><th>± ft</th><th>A→B ft</th></tr>
+        </thead>
+        <tbody id="wpBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Stand-still jitter test</h2>
+    <p class="hint">Stand in one place, start the test, and wait 20–30 seconds (or longer). Spread is the farthest any reading got from the average position, in feet. A large spread means the phone is wandering even while you are not moving.</p>
+    <div id="jitterBox" class="result">Not started.</div>
+  </section>
+
+  <section>
+    <h2>Reading log</h2>
+    <div class="row">
+      <button id="btnCopy" class="ghost" type="button">Copy CSV</button>
+      <button id="btnShare" class="ghost" type="button">Share CSV</button>
+      <button id="btnDownload" class="ghost" type="button">Download CSV</button>
+    </div>
+    <div class="row">
+      <button id="btnClearLog" class="ghost" type="button">Clear log &amp; stats</button>
+    </div>
+    <div class="log-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Time</th><th>± ft</th><th>Lat</th><th>Lon</th></tr>
+        </thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+    <p class="hint" style="margin:8px 0 0">coords.accuracy is meters (about a 68% / 1‑sigma radius). This page converts it to feet (× 3.28084).</p>
+  </section>
+
+  <script>
+    const FT = 3.280839895;
+    const GEO_OPTS = { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 };
+    const MAX_LOG_ROWS = 400;
+
+    const $ = (id) => document.getElementById(id);
+    const el = {
+      hero: $("hero"), accValue: $("accValue"), accSub: $("accSub"), status: $("status"),
+      lat: $("lat"), lon: $("lon"), altAcc: $("altAcc"), updates: $("updates"),
+      age: $("age"), lastTime: $("lastTime"),
+      best: $("best"), median: $("median"), worst: $("worst"), pct10: $("pct10"),
+      btnStart: $("btnStart"), btnJitter: $("btnJitter"),
+      btnA: $("btnA"), btnB: $("btnB"), btnUndoWp: $("btnUndoWp"), btnClearWp: $("btnClearWp"),
+      wpSummary: $("wpSummary"), wpTableWrap: $("wpTableWrap"), wpBody: $("wpBody"),
+      jitterBox: $("jitterBox"), logBody: $("logBody"),
+      btnCopy: $("btnCopy"), btnShare: $("btnShare"), btnDownload: $("btnDownload"),
+      btnClearLog: $("btnClearLog"),
+    };
+
+    let watchId = null;
+    let wakeLock = null;
+    let lastFix = null;
+    let lastFixAt = 0;
+    let readings = [];
+    let waypoints = [];
+    let jitterOn = false;
+    let jitterSamples = [];
+    let ageTimer = null;
+
+    function fmtFt(m, digits = 1) {
+      if (m == null || Number.isNaN(m)) return "—";
+      return (m * FT).toFixed(digits) + " ft";
+    }
+    function fmtNum(n, d) {
+      if (n == null || Number.isNaN(n)) return "—";
+      return Number(n).toFixed(d);
+    }
+    function nowIso(d = new Date()) { return d.toISOString(); }
+    function timeLabel(d) {
+      return d.toLocaleTimeString(undefined, { hour12: true, hour: "numeric", minute: "2-digit", second: "2-digit" });
+    }
+    function toRad(d) { return d * Math.PI / 180; }
+    function haversineMeters(a, b) {
+      const R = 6371008.8;
+      const dLat = toRad(b.lat - a.lat);
+      const dLon = toRad(b.lon - a.lon);
+      const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLon / 2) ** 2;
+      return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+    }
+    function median(nums) {
+      if (!nums.length) return null;
+      const s = [...nums].sort((x, y) => x - y);
+      const mid = Math.floor(s.length / 2);
+      return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+    }
+    function meanPoint(pts) {
+      const lat = pts.reduce((s, p) => s + p.lat, 0) / pts.length;
+      const lon = pts.reduce((s, p) => s + p.lon, 0) / pts.length;
+      return { lat, lon };
+    }
+    function spreadFt(pts) {
+      if (pts.length < 2) return null;
+      const c = meanPoint(pts);
+      let max = 0;
+      for (const p of pts) max = Math.max(max, haversineMeters(c, p));
+      return max * FT;
+    }
+    function setStatus(msg, isErr = false) {
+      el.status.textContent = msg;
+      el.status.classList.toggle("err", isErr);
+    }
+    function bandClass(ft) {
+      if (ft == null) return "";
+      if (ft <= 10) return "ok";
+      if (ft <= 30) return "warn";
+      return "bad";
+    }
+    function colorWord(ft) {
+      if (ft == null) return "";
+      if (ft <= 10) return "Green: within the 5–10 ft target.";
+      if (ft <= 30) return "Yellow: better than a typical indoor cell/Wi‑Fi blob, still coarse for aisle navigation.";
+      return "Red: too coarse for 5–10 ft aisle-level navigation.";
+    }
+
+    function latestFixOrNull() { return lastFix; }
+
+    function onPosition(pos) {
+      const c = pos.coords;
+      const t = new Date(pos.timestamp || Date.now());
+      const rec = {
+        n: readings.length + 1,
+        t,
+        iso: nowIso(t),
+        lat: c.latitude,
+        lon: c.longitude,
+        accuracy: c.accuracy,
+        altitude: c.altitude,
+        altitudeAccuracy: c.altitudeAccuracy,
+        heading: c.heading,
+        speed: c.speed,
+        event: "fix",
+      };
+      readings.push(rec);
+      lastFix = rec;
+      lastFixAt = Date.now();
+      renderFix(rec);
+      renderStats();
+      appendLogRow(rec);
+      if (jitterOn) {
+        jitterSamples.push(rec);
+        renderJitter();
+      }
+    }
+
+    function onError(err) {
+      const map = {
+        1: "Location permission denied. On iPhone: Settings → Privacy & Security → Location Services → Safari Websites → Allow, and turn Precise Location on. Then reload this page.",
+        2: "Position unavailable. Move near a window or entrance, keep Wi‑Fi on, and try again.",
+        3: "Location timed out. Stay on this tab and wait — first indoor fixes can be slow.",
+      };
+      setStatus(map[err.code] || ("Location error: " + (err.message || err.code)), true);
+    }
+
+    function renderFix(rec) {
+      const ft = rec.accuracy * FT;
+      el.accValue.innerHTML = ft.toFixed(1) + '<span class="unit"> ft</span>';
+      el.hero.className = "hero " + bandClass(ft);
+      el.accSub.textContent = colorWord(ft) + "  (raw " + rec.accuracy.toFixed(1) + " m)";
+      el.lat.textContent = rec.lat.toFixed(7);
+      el.lon.textContent = rec.lon.toFixed(7);
+      el.altAcc.textContent = rec.altitudeAccuracy == null ? "—" : fmtFt(rec.altitudeAccuracy);
+      el.updates.textContent = String(readings.length);
+      el.lastTime.textContent = timeLabel(rec.t);
+      renderAge();
+    }
+
+    function renderAge() {
+      if (!lastFixAt) { el.age.textContent = "—"; return; }
+      const s = (Date.now() - lastFixAt) / 1000;
+      el.age.textContent = s < 1 ? "<1 s" : s.toFixed(1) + " s";
+      if (s > 8) el.age.style.color = "var(--yellow)";
+      else el.age.style.color = "";
+    }
+
+    function renderStats() {
+      if (!readings.length) {
+        el.best.textContent = el.median.textContent = el.worst.textContent = el.pct10.textContent = "—";
+        return;
+      }
+      const acc = readings.filter((r) => r.event === "fix").map((r) => r.accuracy);
+      if (!acc.length) {
+        el.best.textContent = el.median.textContent = el.worst.textContent = el.pct10.textContent = "—";
+        return;
+      }
+      const best = Math.min(...acc);
+      const worst = Math.max(...acc);
+      const med = median(acc);
+      const pct = 100 * acc.filter((m) => m * FT <= 10).length / acc.length;
+      el.best.textContent = fmtFt(best);
+      el.median.textContent = fmtFt(med);
+      el.worst.textContent = fmtFt(worst);
+      el.pct10.textContent = pct.toFixed(0) + "%";
+    }
+
+    function appendLogRow(rec) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + rec.n + "</td><td>" + timeLabel(rec.t) + "</td><td>" +
+        (rec.accuracy * FT).toFixed(1) + "</td><td>" + rec.lat.toFixed(6) + "</td><td>" + rec.lon.toFixed(6) + "</td>";
+      el.logBody.insertBefore(tr, el.logBody.firstChild);
+      while (el.logBody.rows.length > MAX_LOG_ROWS) el.logBody.removeChild(el.logBody.lastChild);
+    }
+
+    function pairDistances(list) {
+      const dists = [];
+      const a = list.filter((w) => w.label === "A");
+      const b = list.filter((w) => w.label === "B");
+      const n = Math.min(a.length, b.length);
+      // Pair in time order: each A with the nearest following B, or sequential pairs by visit index.
+      // Use sequential pairing: after sorting all taps, consecutive A-B or B-A pairs.
+      const sorted = [...list].sort((x, y) => x.t - y.t);
+      for (let i = 0; i < sorted.length - 1; i++) {
+        const x = sorted[i], y = sorted[i + 1];
+        if (x.label !== y.label) {
+          dists.push({ from: x, to: y, meters: haversineMeters(x, y) });
+          // skip the consumed 'to' as a 'from' only if we want non-overlapping pairs?
+          // For A,B,A,B we want A1-B1 and A2-B2, not also B1-A2 as a "pass distance"
+          // if the path is A->B, then walk back B->A. Both legs are A-B distances.
+          // Include every adjacent opposite-label pair so return trips count too.
+        }
+      }
+      return dists;
+    }
+
+    function renderWaypoints() {
+      el.wpBody.innerHTML = "";
+      if (!waypoints.length) {
+        el.wpSummary.hidden = true;
+        el.wpTableWrap.hidden = true;
+        return;
+      }
+      el.wpTableWrap.hidden = false;
+      const dists = pairDistances(waypoints);
+      const distByToIso = new Map();
+      dists.forEach((d) => distByToIso.set(d.to.iso + d.to.label, d.meters * FT));
+
+      waypoints.forEach((w, i) => {
+        const tr = document.createElement("tr");
+        const dft = distByToIso.get(w.iso + w.label);
+        tr.innerHTML = "<td>" + (i + 1) + "</td><td class=\"" + w.label.toLowerCase() + "\">" + w.label + "</td><td>" +
+          timeLabel(w.t) + "</td><td>" + (w.accuracy * FT).toFixed(1) + "</td><td>" +
+          (dft != null ? dft.toFixed(1) : "—") + "</td>";
+        el.wpBody.insertBefore(tr, el.wpBody.firstChild);
+      });
+
+      const As = waypoints.filter((w) => w.label === "A");
+      const Bs = waypoints.filter((w) => w.label === "B");
+      const spreadA = spreadFt(As);
+      const spreadB = spreadFt(Bs);
+      const dfts = dists.map((d) => d.meters * FT);
+      const lastDist = dfts.length ? dfts[dfts.length - 1] : null;
+      const meanD = dfts.length ? dfts.reduce((s, x) => s + x, 0) / dfts.length : null;
+      const minD = dfts.length ? Math.min(...dfts) : null;
+      const maxD = dfts.length ? Math.max(...dfts) : null;
+      const varD = dfts.length >= 2 ? (maxD - minD) : null;
+      const medD = dfts.length ? median(dfts) : null;
+
+      let html = "";
+      if (lastDist != null) {
+        html += "<div class=\"big\">Latest A↔B: " + lastDist.toFixed(1) + " ft</div>";
+      } else {
+        html += "<div class=\"big\">Tap the other waypoint to get a distance.</div>";
+      }
+      html += "A taps: <strong>" + As.length + "</strong>";
+      html += spreadA != null ? " — spread " + spreadA.toFixed(1) + " ft from mean A" : (As.length === 1 ? " — need 2+ A taps for spread" : "");
+      html += "<br>B taps: <strong>" + Bs.length + "</strong>";
+      html += spreadB != null ? " — spread " + spreadB.toFixed(1) + " ft from mean B" : (Bs.length === 1 ? " — need 2+ B taps for spread" : "");
+      if (dfts.length) {
+        html += "<br>A↔B distances (" + dfts.length + " legs): latest " + lastDist.toFixed(1) + " ft";
+        html += ", median " + medD.toFixed(1) + " ft, range " + minD.toFixed(1) + "–" + maxD.toFixed(1) + " ft";
+        if (varD != null) html += " (variation " + varD.toFixed(1) + " ft)";
+        if (meanD != null) html += ", mean " + meanD.toFixed(1) + " ft";
+      }
+      html += "<br><span style=\"color:var(--muted)\">Spread = farthest tap from that waypoint’s average reported position. If A or B spreads by more than 10 ft across passes, phone GPS is not precise enough for aisle-level navigation.</span>";
+      el.wpSummary.innerHTML = html;
+      el.wpSummary.hidden = false;
+    }
+
+    function markWaypoint(label) {
+      const fix = latestFixOrNull();
+      if (!fix) {
+        setStatus("No fix yet — wait for a location update, then tap again.", true);
+        return;
+      }
+      const ageMs = Date.now() - lastFixAt;
+      const w = {
+        label,
+        t: new Date(),
+        iso: nowIso(),
+        lat: fix.lat,
+        lon: fix.lon,
+        accuracy: fix.accuracy,
+        altitude: fix.altitude,
+        altitudeAccuracy: fix.altitudeAccuracy,
+        fixN: fix.n,
+        fixAgeMs: ageMs,
+        event: "waypoint-" + label,
+      };
+      waypoints.push(w);
+      readings.push({
+        n: readings.length + 1,
+        t: w.t,
+        iso: w.iso,
+        lat: w.lat,
+        lon: w.lon,
+        accuracy: w.accuracy,
+        altitude: w.altitude,
+        altitudeAccuracy: w.altitudeAccuracy,
+        heading: fix.heading,
+        speed: fix.speed,
+        event: w.event,
+        fixN: w.fixN,
+        fixAgeMs: w.fixAgeMs,
+      });
+      renderWaypoints();
+      setStatus("Recorded Waypoint " + label + "  (±" + (w.accuracy * FT).toFixed(1) + " ft, fix age " + (ageMs / 1000).toFixed(1) + " s).");
+    }
+
+    function renderJitter() {
+      if (!jitterOn && !jitterSamples.length) {
+        el.jitterBox.textContent = "Not started.";
+        return;
+      }
+      const n = jitterSamples.length;
+      if (n === 0) {
+        el.jitterBox.textContent = "Collecting… stand still.";
+        return;
+      }
+      const acc = jitterSamples.map((s) => s.accuracy * FT);
+      let html = "<div class=\"big\">" + n + " sample" + (n === 1 ? "" : "s") + "</div>";
+      if (n < 2) {
+        html += "Need at least two fixes to measure spread. Keep standing still.";
+      } else {
+        const sp = spreadFt(jitterSamples);
+        html += "Spread from mean: <strong>" + sp.toFixed(1) + " ft</strong><br>";
+        html += "Reported accuracy during test — best " + Math.min(...acc).toFixed(1) +
+          " ft, median " + median(acc).toFixed(1) + " ft, worst " + Math.max(...acc).toFixed(1) + " ft.";
+      }
+      if (jitterOn) html += "<br>Test is running. Stay put, then stop when you have enough samples.";
+      el.jitterBox.innerHTML = html;
+    }
+
+    async function requestWakeLock() {
+      try {
+        if (navigator.wakeLock) wakeLock = await navigator.wakeLock.request("screen");
+      } catch (e) { /* iOS may deny; not essential */ }
+    }
+    function releaseWakeLock() {
+      if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
+    }
+
+    function setTrackingUi(on) {
+      el.btnStart.textContent = on ? "Stop tracking" : "Start tracking";
+      el.btnStart.classList.toggle("on", on);
+      el.btnJitter.disabled = !on && !jitterOn;
+      el.btnA.disabled = !on;
+      el.btnB.disabled = !on;
+    }
+
+    async function startTracking() {
+      if (!navigator.geolocation) {
+        setStatus("This browser has no geolocation API. Open this page in Safari on your iPhone.", true);
+        return;
+      }
+      setStatus("Requesting location… tap Allow if prompted.");
+      watchId = navigator.geolocation.watchPosition(onPosition, onError, GEO_OPTS);
+      setTrackingUi(true);
+      if (!ageTimer) ageTimer = setInterval(renderAge, 250);
+      await requestWakeLock();
+    }
+
+    function stopTracking() {
+      if (watchId != null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+      if (jitterOn) toggleJitter(false);
+      setTrackingUi(false);
+      releaseWakeLock();
+      setStatus(lastFix ? "Tracking stopped. Log is still on this phone until you clear it." : "Tracking stopped.");
+    }
+
+    function toggleJitter(force) {
+      const next = typeof force === "boolean" ? force : !jitterOn;
+      if (next) {
+        if (!watchId) { setStatus("Start tracking first.", true); return; }
+        jitterOn = true;
+        jitterSamples = [];
+        el.btnJitter.textContent = "Stop stand-still test";
+        setStatus("Stand-still test running. Don’t move.");
+        renderJitter();
+      } else {
+        jitterOn = false;
+        el.btnJitter.textContent = "Start stand-still test";
+        el.btnJitter.disabled = !watchId;
+        renderJitter();
+        if (jitterSamples.length >= 2) {
+          setStatus("Stand-still spread: " + spreadFt(jitterSamples).toFixed(1) + " ft.");
+        } else {
+          setStatus("Stand-still test stopped.");
+        }
+      }
+    }
+
+    function csvEscape(v) {
+      if (v == null) return "";
+      const s = String(v);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+
+    function buildCsv() {
+      const headers = [
+        "event", "n", "timestamp_iso", "lat", "lon", "accuracy_m", "accuracy_ft",
+        "altitude_m", "altitude_accuracy_m", "heading", "speed_mps",
+        "waypoint", "fix_n", "fix_age_s"
+      ];
+      const lines = [headers.join(",")];
+      const extra = [];
+      // Include waypoint rows already merged into readings; also add a summary comment block at end
+      const rows = readings.filter((r) => r.event === "fix");
+      // Always emit waypoint rows from the waypoints list so they survive a log clear.
+      for (const r of rows) {
+        lines.push([
+          "fix", r.n, r.iso, r.lat, r.lon,
+          r.accuracy, r.accuracy * FT,
+          r.altitude, r.altitudeAccuracy, r.heading, r.speed,
+          "", "", ""
+        ].map(csvEscape).join(","));
+      }
+      waypoints.forEach((w, i) => {
+        lines.push([
+          w.event, "wp-" + (i + 1), w.iso, w.lat, w.lon,
+          w.accuracy, w.accuracy * FT,
+          w.altitude, w.altitudeAccuracy, "", "",
+          w.label, w.fixN || "", w.fixAgeMs != null ? (w.fixAgeMs / 1000).toFixed(3) : ""
+        ].map(csvEscape).join(","));
+      });
+      if (waypoints.length) {
+        lines.push("");
+        lines.push("# waypoint_summary");
+        const As = waypoints.filter((w) => w.label === "A");
+        const Bs = waypoints.filter((w) => w.label === "B");
+        const dists = pairDistances(waypoints);
+        lines.push("# a_count," + As.length);
+        lines.push("# b_count," + Bs.length);
+        lines.push("# a_spread_ft," + (spreadFt(As) != null ? spreadFt(As).toFixed(3) : ""));
+        lines.push("# b_spread_ft," + (spreadFt(Bs) != null ? spreadFt(Bs).toFixed(3) : ""));
+        const dfts = dists.map((d) => d.meters * FT);
+        if (dfts.length) {
+          lines.push("# ab_legs," + dfts.length);
+          lines.push("# ab_median_ft," + median(dfts).toFixed(3));
+          lines.push("# ab_min_ft," + Math.min(...dfts).toFixed(3));
+          lines.push("# ab_max_ft," + Math.max(...dfts).toFixed(3));
+          lines.push("# ab_variation_ft," + (Math.max(...dfts) - Math.min(...dfts)).toFixed(3));
+        }
+      }
+      if (jitterSamples.length >= 2) {
+        lines.push("# jitter_samples," + jitterSamples.length);
+        lines.push("# jitter_spread_ft," + spreadFt(jitterSamples).toFixed(3));
+      }
+      return lines.join("\n");
+    }
+
+    function csvFilename() {
+      const d = new Date();
+      const p = (n) => String(n).padStart(2, "0");
+      return "gps-precision-" + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + "-" + p(d.getHours()) + p(d.getMinutes()) + ".csv";
+    }
+
+    async function copyCsv() {
+      const csv = buildCsv();
+      try {
+        await navigator.clipboard.writeText(csv);
+        setStatus("CSV copied to the clipboard.");
+      } catch (e) {
+        prompt("Copy the CSV:", csv);
+      }
+    }
+
+    async function shareCsv() {
+      const csv = buildCsv();
+      const file = new File([csv], csvFilename(), { type: "text/csv" });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ title: "GPS precision log", files: [file] }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+      }
+      if (navigator.share) {
+        try { await navigator.share({ title: "GPS precision log", text: csv }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+      }
+      await copyCsv();
+    }
+
+    function downloadCsv() {
+      const csv = buildCsv();
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = csvFilename();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setStatus("CSV download started.");
+    }
+
+    function clearLog() {
+      if (jitterOn) toggleJitter(false);
+      readings = [];
+      lastFix = null;
+      lastFixAt = 0;
+      jitterSamples = [];
+      el.logBody.innerHTML = "";
+      el.accValue.innerHTML = '—<span class="unit"> ft</span>';
+      el.hero.className = "hero";
+      el.accSub.textContent = "Log cleared. Tracking can continue.";
+      el.lat.textContent = el.lon.textContent = el.altAcc.textContent = "—";
+      el.updates.textContent = "0";
+      el.age.textContent = el.lastTime.textContent = "—";
+      renderStats();
+      renderJitter();
+      setStatus("Log and stats cleared. Waypoints were left alone — clear those separately if you want.");
+    }
+
+    el.btnStart.addEventListener("click", () => watchId ? stopTracking() : startTracking());
+    el.btnJitter.addEventListener("click", () => toggleJitter());
+    el.btnA.addEventListener("click", () => markWaypoint("A"));
+    el.btnB.addEventListener("click", () => markWaypoint("B"));
+    el.btnUndoWp.addEventListener("click", () => {
+      const w = waypoints.pop();
+      if (!w) return;
+      // remove matching waypoint event from readings (last matching)
+      for (let i = readings.length - 1; i >= 0; i--) {
+        if (readings[i].event === "waypoint-" + w.label && readings[i].iso === w.iso) {
+          readings.splice(i, 1);
+          break;
+        }
+      }
+      renderWaypoints();
+      setStatus("Undid last waypoint tap.");
+    });
+    el.btnClearWp.addEventListener("click", () => {
+      waypoints = [];
+      renderWaypoints();
+      setStatus("Waypoints cleared.");
+    });
+    el.btnCopy.addEventListener("click", copyCsv);
+    el.btnShare.addEventListener("click", shareCsv);
+    el.btnDownload.addEventListener("click", downloadCsv);
+    el.btnClearLog.addEventListener("click", clearLog);
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && watchId) requestWakeLock();
+    });
+  </script>
+</body>
+</html>
