@@ -2,7 +2,7 @@
 
 A mobile web page for checking whether a phone’s location (GPS / Wi‑Fi / cell) can reach **5–10 ft** precision indoors — for example inside a Walmart Supercenter.
 
-Open it in Safari on an iPhone: **https://josephcagle.github.io/walmart-gps-test/**
+Open it in Safari on an iPhone: **https://gps-precision-tester.netlify.app/**
 
 Nothing is uploaded. Readings stay on the phone until you copy, share, or download the CSV.
 
